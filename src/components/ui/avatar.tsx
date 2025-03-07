@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
@@ -25,6 +26,10 @@ const AvatarImage = React.forwardRef<
   <AvatarPrimitive.Image
     ref={ref}
     className={cn("aspect-square h-full w-full", className)}
+    onError={(e) => {
+      // Hide the image element when it fails to load
+      e.currentTarget.style.display = 'none';
+    }}
     {...props}
   />
 ))

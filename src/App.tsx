@@ -10,6 +10,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 import CreateReminder from "./pages/CreateReminder";
 import EditReminder from "./pages/EditReminder";
 import Birthdays from "./pages/Birthdays";
@@ -70,6 +71,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            } />
+            <Route path="/settings" element={
+              <PrivateRoute>
+                <Settings />
               </PrivateRoute>
             } />
             <Route path="/create-reminder" element={

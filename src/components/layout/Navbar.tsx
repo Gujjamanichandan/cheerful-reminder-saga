@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
   Menu,
   User,
   PlusCircle,
+  Settings,
   X,
 } from "lucide-react";
 import {
@@ -149,8 +151,8 @@ export function Navbar() {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
