@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				celebration: {
+					DEFAULT: '#FF6B6B', // Warm coral for celebrations
+					foreground: '#ffffff',
+					muted: '#FFC6C6',
+					subtle: '#FFEDED'
+				},
+				birthday: {
+					DEFAULT: '#4ECDC4', // Teal for birthdays
+					foreground: '#ffffff',
+					muted: '#A5E9E1',
+					subtle: '#E8F8F7'
+				},
+				anniversary: {
+					DEFAULT: '#9C89B8', // Lavender for anniversaries
+					foreground: '#ffffff',
+					muted: '#D1C6E2',
+					subtle: '#F3EFFA'
 				}
 			},
 			borderRadius: {
@@ -84,11 +103,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'celebrate': {
+					'0%, 100%': { transform: 'rotate(-3deg)' },
+					'50%': { transform: 'rotate(3deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'celebrate': 'celebrate 0.7s ease-in-out'
 			}
 		}
 	},
