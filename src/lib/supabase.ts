@@ -1,10 +1,10 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+import type { Database } from '@/types/supabase';
 
-// These values will be replaced through the Supabase integration
-const supabaseUrl = '';
-const supabaseAnonKey = '';
+// These values need to be populated with your Supabase project's URL and public API key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
