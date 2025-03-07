@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import {
   LogOut,
   Menu,
   User,
+  PlusCircle,
   X,
 } from "lucide-react";
 import {
@@ -132,7 +132,7 @@ export function Navbar() {
             className="hidden md:flex gap-1 items-center"
             onClick={() => navigate("/create-reminder")}
           >
-            <CalendarPlus className="h-4 w-4 mr-1" />
+            <PlusCircle className="h-4 w-4 mr-1" />
             New Reminder
           </Button>
           
