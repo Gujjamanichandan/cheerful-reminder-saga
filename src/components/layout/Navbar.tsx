@@ -189,9 +189,9 @@ export function Navbar() {
                       onSelect={setSelectedDate}
                       className="p-3 pointer-events-auto"
                       components={{
-                        Day: (props) => {
-                          // Properly destructure the props object to extract date and other props
-                          const { date, ...dayProps } = props;
+                        Day: ({ day, date, ...dayProps }) => {
+                          // Make sure we have a valid date to work with
+                          if (!date) return null;
                           
                           // Check if date has reminders
                           const hasReminders = isReminderDate(date);
