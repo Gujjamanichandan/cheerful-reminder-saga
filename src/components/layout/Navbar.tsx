@@ -196,19 +196,19 @@ export function Navbar() {
                         hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
                       }}
                       components={{
-                        Day: (props: DayProps) => {
-                          if (!props.date) return null;
+                        Day: ({ date, ...dayProps }: DayProps & { className?: string }) => {
+                          if (!date) return null;
                           
-                          const hasReminders = isReminderDate(props.date);
-                          const reminders = getReminderDetails(props.date);
+                          const hasReminders = isReminderDate(date);
+                          const reminders = getReminderDetails(date);
                           
                           return (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
-                                  {...props}
+                                  {...dayProps}
                                   className={cn(
-                                    props.className,
+                                    dayProps.className,
                                     hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
                                   )}
                                 />
