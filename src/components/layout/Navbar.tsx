@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { addDays, format, isSameDay } from "date-fns";
 import { supabase, type Reminder } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
+import { DayProps } from "react-day-picker";
 
 export function Navbar() {
   const { user, signOut } = useAuth();
@@ -189,7 +190,10 @@ export function Navbar() {
                       onSelect={setSelectedDate}
                       className="p-3 pointer-events-auto"
                       components={{
-                        Day: ({ day, date, ...dayProps }) => {
+                        Day: (props: DayProps) => {
+                          // Correctly access the date property from DayProps
+                          const { date } = props;
+                          
                           // Make sure we have a valid date to work with
                           if (!date) return null;
                           
@@ -201,9 +205,9 @@ export function Navbar() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
-                                  {...dayProps}
+                                  {...props}
                                   className={cn(
-                                    dayProps.className,
+                                    props.className,
                                     hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
                                   )}
                                 />
