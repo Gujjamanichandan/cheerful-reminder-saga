@@ -178,27 +178,34 @@ export function Navbar() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="center" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      className="p-3"
-                      modifiers={{
-                        hasReminder: (date) => isReminderDate(date)
-                      }}
-                      modifiersClassNames={{
-                        hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
-                      }}
-                      components={{
-                        Day: (props) => {
-                          const { date, ...rest } = props;
-                          if (!date) return null;
-                          
-                          const hasReminders = isReminderDate(date);
-                          const reminders = getReminderDetails(date);
-                          
-                          return (
-                            <TooltipProvider>
+                    <TooltipProvider>
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        className="p-3"
+                        modifiers={{
+                          hasReminder: (date) => isReminderDate(date)
+                        }}
+                        modifiersClassNames={{
+                          hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
+                        }}
+                        components={{
+                          Day: (props) => {
+                            // Check if this is a date cell or a header/footer cell
+                            if ('displayMonth' in props) {
+                              // This is not a date cell, just return the default rendering
+                              return <button {...props} />;
+                            }
+
+                            // Now we know it's a date cell with a date property
+                            const { date, ...rest } = props as DayProps & { date: Date, className?: string };
+                            if (!date) return null;
+                            
+                            const hasReminders = isReminderDate(date);
+                            const reminders = getReminderDetails(date);
+                            
+                            return (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <button
@@ -221,11 +228,11 @@ export function Navbar() {
                                   </TooltipContent>
                                 )}
                               </Tooltip>
-                            </TooltipProvider>
-                          );
-                        }
-                      }}
-                    />
+                            );
+                          }
+                        }}
+                      />
+                    </TooltipProvider>
                   </PopoverContent>
                 </Popover>
               </TooltipProvider>
