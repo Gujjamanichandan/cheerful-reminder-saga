@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,6 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  // Fetch user's reminders
   const { data: reminders = [] } = useQuery({
     queryKey: ['reminders'],
     queryFn: async (): Promise<Reminder[]> => {
@@ -61,11 +59,8 @@ export function Navbar() {
     enabled: !!user,
   });
 
-  // Transform reminder dates to Date objects
   const reminderDates = reminders.map(reminder => {
-    // Extract month and day from the date (ignoring year)
     const [year, month, day] = reminder.date.split('-').map(Number);
-    // Use current year for highlighting purposes
     const currentYear = new Date().getFullYear();
     return {
       date: new Date(currentYear, month - 1, day),
@@ -74,14 +69,12 @@ export function Navbar() {
     };
   });
 
-  // Function to check if a date has reminders
   const isReminderDate = (date: Date) => {
     return reminderDates.some(reminder => 
       isSameDay(date, reminder.date)
     );
   };
 
-  // Function to get reminder details for a specific date
   const getReminderDetails = (date: Date) => {
     return reminderDates.filter(reminder => 
       isSameDay(date, reminder.date)
@@ -184,51 +177,55 @@ export function Navbar() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="center" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      className="p-3 pointer-events-auto"
-                      modifiers={{
-                        hasReminder: (date) => isReminderDate(date)
-                      }}
-                      modifiersClassNames={{
-                        hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
-                      }}
-                      components={{
-                        Day: ({ date, ...dayProps }: DayProps & { className?: string }) => {
-                          if (!date) return null;
-                          
-                          const hasReminders = isReminderDate(date);
-                          const reminders = getReminderDetails(date);
-                          
-                          return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  {...dayProps}
-                                  className={cn(
-                                    dayProps.className,
-                                    hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
-                                  )}
-                                />
-                              </TooltipTrigger>
-                              {hasReminders && (
-                                <TooltipContent side="right" className="p-2 max-w-xs">
-                                  <div className="space-y-1">
-                                    {reminders.map((reminder, i) => (
-                                      <p key={i} className="text-sm">
-                                        {reminder.name} - {reminder.type === 'birthday' ? 'Birthday' : 'Anniversary'}
-                                      </p>
-                                    ))}
-                                  </div>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                          );
-                        }
-                      }}
-                    />
+                    <TooltipProvider>
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        className="p-3"
+                        modifiers={{
+                          hasReminder: (date) => isReminderDate(date)
+                        }}
+                        modifiersClassNames={{
+                          hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
+                        }}
+                        components={{
+                          Day: (props) => {
+                            if (!props.date) return null;
+                            
+                            const hasReminders = isReminderDate(props.date);
+                            const reminders = getReminderDetails(props.date);
+                            
+                            const { className, ...dayProps } = props as any;
+                            
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    {...dayProps}
+                                    className={cn(
+                                      className,
+                                      hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
+                                    )}
+                                  />
+                                </TooltipTrigger>
+                                {hasReminders && (
+                                  <TooltipContent side="right" className="p-2 max-w-xs">
+                                    <div className="space-y-1">
+                                      {reminders.map((reminder, i) => (
+                                        <p key={i} className="text-sm">
+                                          {reminder.name} - {reminder.type === 'birthday' ? 'Birthday' : 'Anniversary'}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            );
+                          }
+                        }}
+                      />
+                    </TooltipProvider>
                   </PopoverContent>
                 </Popover>
               </TooltipProvider>
