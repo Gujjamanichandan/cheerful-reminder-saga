@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -177,34 +178,33 @@ export function Navbar() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="center" className="w-auto p-0">
-                    <TooltipProvider>
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        className="p-3"
-                        modifiers={{
-                          hasReminder: (date) => isReminderDate(date)
-                        }}
-                        modifiersClassNames={{
-                          hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
-                        }}
-                        components={{
-                          Day: (props) => {
-                            if (!props.date) return null;
-                            
-                            const hasReminders = isReminderDate(props.date);
-                            const reminders = getReminderDetails(props.date);
-                            
-                            const { className, ...dayProps } = props as any;
-                            
-                            return (
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      className="p-3"
+                      modifiers={{
+                        hasReminder: (date) => isReminderDate(date)
+                      }}
+                      modifiersClassNames={{
+                        hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
+                      }}
+                      components={{
+                        Day: (props) => {
+                          const { date, ...rest } = props;
+                          if (!date) return null;
+                          
+                          const hasReminders = isReminderDate(date);
+                          const reminders = getReminderDetails(date);
+                          
+                          return (
+                            <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <button
-                                    {...dayProps}
+                                    {...rest}
                                     className={cn(
-                                      className,
+                                      rest.className,
                                       hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
                                     )}
                                   />
@@ -221,11 +221,11 @@ export function Navbar() {
                                   </TooltipContent>
                                 )}
                               </Tooltip>
-                            );
-                          }
-                        }}
-                      />
-                    </TooltipProvider>
+                            </TooltipProvider>
+                          );
+                        }
+                      }}
+                    />
                   </PopoverContent>
                 </Popover>
               </TooltipProvider>
