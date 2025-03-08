@@ -189,7 +189,10 @@ export function Navbar() {
                       onSelect={setSelectedDate}
                       className="p-3 pointer-events-auto"
                       components={{
-                        Day: ({ date, ...props }) => {
+                        Day: (props) => {
+                          // Properly destructure the props object to extract date and other props
+                          const { date, ...dayProps } = props;
+                          
                           // Check if date has reminders
                           const hasReminders = isReminderDate(date);
                           const reminders = getReminderDetails(date);
@@ -198,9 +201,9 @@ export function Navbar() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
-                                  {...props}
+                                  {...dayProps}
                                   className={cn(
-                                    props.className,
+                                    dayProps.className,
                                     hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
                                   )}
                                 />
