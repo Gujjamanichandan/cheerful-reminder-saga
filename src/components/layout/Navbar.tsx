@@ -3,13 +3,12 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   Gift,
   Heart,
   Home,
   LogOut,
   Menu,
-  User,
   PlusCircle,
   Settings,
   X,
@@ -26,12 +25,67 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { addDays, format, isSameDay } from "date-fns";
+import { supabase, type Reminder } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
 
 export function Navbar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  // Fetch user's reminders
+  const { data: reminders = [] } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: async (): Promise<Reminder[]> => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('archived', false);
+      
+      if (error) {
+        console.error('Error fetching reminders:', error);
+        return [];
+      }
+      
+      return data as Reminder[];
+    },
+    enabled: !!user,
+  });
+
+  // Transform reminder dates to Date objects
+  const reminderDates = reminders.map(reminder => {
+    // Extract month and day from the date (ignoring year)
+    const [year, month, day] = reminder.date.split('-').map(Number);
+    // Use current year for highlighting purposes
+    const currentYear = new Date().getFullYear();
+    return {
+      date: new Date(currentYear, month - 1, day),
+      name: reminder.person_name,
+      type: reminder.type
+    };
+  });
+
+  // Function to check if a date has reminders
+  const isReminderDate = (date: Date) => {
+    return reminderDates.some(reminder => 
+      isSameDay(date, reminder.date)
+    );
+  };
+
+  // Function to get reminder details for a specific date
+  const getReminderDetails = (date: Date) => {
+    return reminderDates.filter(reminder => 
+      isSameDay(date, reminder.date)
+    );
+  };
 
   const routes = [
     {
@@ -52,7 +106,7 @@ export function Navbar() {
     {
       name: "Calendar",
       path: "/calendar",
-      icon: Calendar,
+      icon: CalendarIcon,
     },
   ];
 
@@ -110,20 +164,81 @@ export function Navbar() {
         </Link>
         
         <nav className="mx-6 flex items-center space-x-4 lg:space-x-6 hidden md:flex">
-          {routes.map((route) => (
-            <Link
-              key={route.path}
-              to={route.path}
-              className={cn(
-                "text-sm font-medium transition-colors flex items-center gap-1.5",
-                isActive(route.path)
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <route.icon className="h-4 w-4" />
-              {route.name}
-            </Link>
+          {routes.map((route, index) => (
+            index === routes.length - 1 ? (
+              <TooltipProvider key={route.path}>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "text-sm font-medium transition-colors flex items-center gap-1.5",
+                        isActive(route.path)
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <route.icon className="h-4 w-4" />
+                      {route.name}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      className="p-3 pointer-events-auto"
+                      components={{
+                        Day: ({ date, ...props }) => {
+                          // Check if date has reminders
+                          const hasReminders = isReminderDate(date);
+                          const reminders = getReminderDetails(date);
+                          
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  {...props}
+                                  className={cn(
+                                    props.className,
+                                    hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
+                                  )}
+                                />
+                              </TooltipTrigger>
+                              {hasReminders && (
+                                <TooltipContent side="right" className="p-2 max-w-xs">
+                                  <div className="space-y-1">
+                                    {reminders.map((reminder, i) => (
+                                      <p key={i} className="text-sm">
+                                        {reminder.name} - {reminder.type === 'birthday' ? 'Birthday' : 'Anniversary'}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          );
+                        }
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </TooltipProvider>
+            ) : (
+              <Link
+                key={route.path}
+                to={route.path}
+                className={cn(
+                  "text-sm font-medium transition-colors flex items-center gap-1.5",
+                  isActive(route.path)
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <route.icon className="h-4 w-4" />
+                {route.name}
+              </Link>
+            )
           ))}
         </nav>
         
