@@ -1,41 +1,17 @@
 
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Calendar as CalendarIcon,
-  Gift,
-  Heart,
-  Home,
-  LogOut,
-  Menu,
-  PlusCircle,
-  Settings,
-  X,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Link, useLocation } from "react-router-dom";
+import { Gift, Heart, Home, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { addDays, format, isSameDay } from "date-fns";
 import { supabase, type Reminder } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
-import { DayProps } from "react-day-picker";
+import { MobileNav } from "./MobileNav";
+import { DesktopNav } from "./DesktopNav";
+import { UserMenu } from "./UserMenu";
 
 export function Navbar() {
   const { user, signOut } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -70,18 +46,6 @@ export function Navbar() {
     };
   });
 
-  const isReminderDate = (date: Date) => {
-    return reminderDates.some(reminder => 
-      isSameDay(date, reminder.date)
-    );
-  };
-
-  const getReminderDetails = (date: Date) => {
-    return reminderDates.filter(reminder => 
-      isSameDay(date, reminder.date)
-    );
-  };
-
   const routes = [
     {
       name: "Dashboard",
@@ -107,50 +71,16 @@ export function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
-  const initials = user?.email?.substring(0, 2).toUpperCase() || "U";
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container flex h-16 items-center">
         <div className="md:hidden">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="grid gap-2 py-6 px-4">
-                <div className="flex items-center gap-2 mb-6">
-                  <Gift className="h-6 w-6 text-celebration" />
-                  <span className="text-lg font-semibold">Cheerful Reminder</span>
-                </div>
-                <nav className="grid gap-1">
-                  {routes.map((route) => (
-                    <Link
-                      key={route.path}
-                      to={route.path}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium",
-                        isActive(route.path)
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent hover:text-accent-foreground"
-                      )}
-                      onClick={() => setOpen(false)}
-                    >
-                      <route.icon className="h-4 w-4" />
-                      {route.name}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <MobileNav 
+            routes={routes} 
+            isActive={isActive} 
+            open={open} 
+            setOpen={setOpen} 
+          />
         </div>
 
         <Link to="/dashboard" className="flex items-center gap-2">
@@ -158,139 +88,15 @@ export function Navbar() {
           <span className="font-semibold text-lg hidden md:block">Cheerful Reminder</span>
         </Link>
         
-        <nav className="mx-6 flex items-center space-x-4 lg:space-x-6 hidden md:flex">
-          {routes.map((route, index) => (
-            index === routes.length - 1 ? (
-              <TooltipProvider key={route.path}>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "text-sm font-medium transition-colors flex items-center gap-1.5",
-                        isActive(route.path)
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <route.icon className="h-4 w-4" />
-                      {route.name}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="w-auto p-0">
-                    <TooltipProvider>
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        className="p-3"
-                        modifiers={{
-                          hasReminder: (date) => isReminderDate(date)
-                        }}
-                        modifiersClassNames={{
-                          hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
-                        }}
-                        components={{
-                          Day: (props) => {
-                            // Check if this is a date cell or a header/footer cell
-                            if ('displayMonth' in props) {
-                              // This is not a date cell, just return the default rendering
-                              return <button {...props} />;
-                            }
-
-                            // Now we know it's a date cell with a date property
-                            const { date, ...rest } = props as DayProps & { date: Date, className?: string };
-                            if (!date) return null;
-                            
-                            const hasReminders = isReminderDate(date);
-                            const reminders = getReminderDetails(date);
-                            
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    {...rest}
-                                    className={cn(
-                                      rest.className,
-                                      hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
-                                    )}
-                                  />
-                                </TooltipTrigger>
-                                {hasReminders && (
-                                  <TooltipContent side="right" className="p-2 max-w-xs">
-                                    <div className="space-y-1">
-                                      {reminders.map((reminder, i) => (
-                                        <p key={i} className="text-sm">
-                                          {reminder.name} - {reminder.type === 'birthday' ? 'Birthday' : 'Anniversary'}
-                                        </p>
-                                      ))}
-                                    </div>
-                                  </TooltipContent>
-                                )}
-                              </Tooltip>
-                            );
-                          }
-                        }}
-                      />
-                    </TooltipProvider>
-                  </PopoverContent>
-                </Popover>
-              </TooltipProvider>
-            ) : (
-              <Link
-                key={route.path}
-                to={route.path}
-                className={cn(
-                  "text-sm font-medium transition-colors flex items-center gap-1.5",
-                  isActive(route.path)
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <route.icon className="h-4 w-4" />
-                {route.name}
-              </Link>
-            )
-          ))}
-        </nav>
+        <DesktopNav 
+          routes={routes} 
+          isActive={isActive} 
+          selectedDate={selectedDate} 
+          setSelectedDate={setSelectedDate} 
+          reminderDates={reminderDates} 
+        />
         
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden md:flex gap-1 items-center"
-            onClick={() => navigate("/create-reminder")}
-          >
-            <PlusCircle className="h-4 w-4 mr-1" />
-            New Reminder
-          </Button>
-          
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button onClick={() => navigate("/sign-in")}>Sign In</Button>
-          )}
-        </div>
+        <UserMenu user={user} signOut={signOut} />
       </div>
     </header>
   );
