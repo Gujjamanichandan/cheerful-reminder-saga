@@ -189,17 +189,18 @@ export function Navbar() {
                       selected={selectedDate}
                       onSelect={setSelectedDate}
                       className="p-3 pointer-events-auto"
+                      modifiers={{
+                        hasReminder: (date) => isReminderDate(date)
+                      }}
+                      modifiersClassNames={{
+                        hasReminder: "bg-celebration text-celebration-foreground hover:bg-celebration/90"
+                      }}
                       components={{
                         Day: (props: DayProps) => {
-                          // Correctly access the date property from DayProps
-                          const { date } = props;
+                          if (!props.date) return null;
                           
-                          // Make sure we have a valid date to work with
-                          if (!date) return null;
-                          
-                          // Check if date has reminders
-                          const hasReminders = isReminderDate(date);
-                          const reminders = getReminderDetails(date);
+                          const hasReminders = isReminderDate(props.date);
+                          const reminders = getReminderDetails(props.date);
                           
                           return (
                             <Tooltip>
@@ -207,7 +208,7 @@ export function Navbar() {
                                 <button
                                   {...props}
                                   className={cn(
-                                    (props as any).className, // Type assertion to any to access className
+                                    props.className,
                                     hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
                                   )}
                                 />
