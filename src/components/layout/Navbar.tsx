@@ -207,7 +207,7 @@ export function Navbar() {
                                 <button
                                   {...props}
                                   className={cn(
-                                    props.className,
+                                    (props as any).className, // Type assertion to any to access className
                                     hasReminders && 'bg-celebration text-celebration-foreground hover:bg-celebration/90'
                                   )}
                                 />
