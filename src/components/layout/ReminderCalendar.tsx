@@ -50,7 +50,7 @@ export function ReminderCalendar({ reminders, selectedDate, onDateSelect }: Remi
           }
 
           // Now we know it's a date cell with a date property
-          const dayProps = props as React.ButtonHTMLAttributes<HTMLButtonElement> & { date: Date };
+          const dayProps = props as any; // Using any to solve the spread type error
           const { date, className, ...rest } = dayProps;
           
           if (!date) return null;
