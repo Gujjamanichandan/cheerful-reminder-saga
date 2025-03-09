@@ -27,7 +27,7 @@ export function MobileNav({ routes, isActive, open, setOpen }: MobileNavProps) {
       <SheetContent side="left" className="w-64 p-0">
         <div className="grid gap-2 py-6 px-4">
           <div className="flex items-center gap-2 mb-6">
-            {routes[1] && <routes[1].icon className="h-6 w-6 text-celebration" />}
+            {routes[1] && routes[1].icon && React.createElement(routes[1].icon, { className: "h-6 w-6 text-celebration" })}
             <span className="text-lg font-semibold">Cheerful Reminder</span>
           </div>
           <nav className="grid gap-1">
@@ -43,7 +43,7 @@ export function MobileNav({ routes, isActive, open, setOpen }: MobileNavProps) {
                 )}
                 onClick={() => setOpen(false)}
               >
-                <route.icon className="h-4 w-4" />
+                {React.createElement(route.icon, { className: "h-4 w-4" })}
                 {route.name}
               </Link>
             ))}
