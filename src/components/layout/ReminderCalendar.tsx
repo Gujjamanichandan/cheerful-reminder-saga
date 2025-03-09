@@ -50,7 +50,14 @@ export function ReminderCalendar({ reminders, selectedDate, onDateSelect }: Remi
           }
 
           // Now we know it's a date cell with a date property
-          const dayProps = props as any; // Using any to solve the spread type error
+          // Create a properly typed interface for day props
+          interface DayProps {
+            date: Date;
+            className?: string;
+            [key: string]: any; // Allow for any other properties
+          }
+          
+          const dayProps = props as DayProps;
           const { date, className, ...rest } = dayProps;
           
           if (!date) return null;
