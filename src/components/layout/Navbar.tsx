@@ -1,8 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Gift, Heart, Home, Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Gift, Heart, Home } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, type Reminder } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +13,6 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const { data: reminders = [] } = useQuery({
     queryKey: ['reminders'],
@@ -36,16 +34,6 @@ export function Navbar() {
     enabled: !!user,
   });
 
-  const reminderDates = reminders.map(reminder => {
-    const [year, month, day] = reminder.date.split('-').map(Number);
-    const currentYear = new Date().getFullYear();
-    return {
-      date: new Date(currentYear, month - 1, day),
-      name: reminder.person_name,
-      type: reminder.type
-    };
-  });
-
   const routes = [
     {
       name: "Dashboard",
@@ -61,11 +49,6 @@ export function Navbar() {
       name: "Anniversaries",
       path: "/anniversaries",
       icon: Heart,
-    },
-    {
-      name: "Calendar",
-      path: "/calendar",
-      icon: CalendarIcon,
     },
   ];
 
@@ -91,9 +74,6 @@ export function Navbar() {
         <DesktopNav 
           routes={routes} 
           isActive={isActive} 
-          selectedDate={selectedDate} 
-          setSelectedDate={setSelectedDate} 
-          reminderDates={reminderDates} 
         />
         
         <UserMenu user={user} signOut={signOut} />
