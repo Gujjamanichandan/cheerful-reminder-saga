@@ -1,108 +1,143 @@
 
-import React from "react";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { addDays, format, isSameDay, isSameMonth, parseISO } from "date-fns";
-import { Reminder, ReminderType } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Reminder } from "@/lib/supabase";
 
 interface ReminderCalendarProps {
   reminders: Reminder[];
-  onDateSelect?: (date: Date) => void;
 }
 
-export function ReminderCalendar({ reminders, onDateSelect }: ReminderCalendarProps) {
-  const [date, setDate] = React.useState<Date>(new Date());
+// Define the DayProps interface to fix the spread type error
+interface DayProps {
+  date: Date;
+  displayMonth?: Date;
+  selected?: boolean;
+  disabled?: boolean;
+  inRange?: boolean;
+  firstInRange?: boolean;
+  lastInRange?: boolean;
+  today?: boolean;
+  weekend?: boolean;
+  outside?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  onMouseEnter?: React.MouseEventHandler<HTMLButtonElement>;
+  [key: string]: any; // Allow additional properties
+}
 
-  // Map for storing dates with reminders
-  const reminderDates = new Map<string, Reminder[]>();
-  
-  // Group reminders by date
-  reminders.forEach((reminder) => {
-    const dateString = format(parseISO(reminder.date), 'yyyy-MM-dd');
-    if (!reminderDates.has(dateString)) {
-      reminderDates.set(dateString, []);
-    }
-    reminderDates.get(dateString)?.push(reminder);
-  });
+export function ReminderCalendar({ reminders }: ReminderCalendarProps) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [remindersOnDate, setRemindersOnDate] = useState<Reminder[]>([]);
 
-  const handleSelect = (newDate: Date | undefined) => {
-    if (newDate) {
-      setDate(newDate);
-      if (onDateSelect) {
-        onDateSelect(newDate);
-      }
-    }
-  };
-
-  // Custom day renderer function
-  const dayRenderer = (day: Date, selectedDays: Date[], props: Record<string, any>) => {
-    // Ignore date elements that are headers or outside the month
-    if (props.outside || !props.date) {
-      return props.children;
+  // Find reminders on the selected date
+  useEffect(() => {
+    if (!selectedDate) {
+      setRemindersOnDate([]);
+      return;
     }
 
-    // Define a type for the day props to fix the spread type error
-    type DayProps = {
-      date: Date;
-      className?: string;
-      [key: string]: any;
-    };
-    
-    const dayProps = props as DayProps;
-    const { date, className, ...rest } = dayProps;
-    
-    if (!date) return null;
-    
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const hasReminders = reminderDates.has(dateStr);
-    
-    // We'll show dots for each type (birthday, anniversary)
-    const birthdayReminders = reminderDates.get(dateStr)?.filter(r => r.type === 'birthday') || [];
-    const anniversaryReminders = reminderDates.get(dateStr)?.filter(r => r.type === 'anniversary') || [];
-    
+    const dateString = format(selectedDate, "yyyy-MM-dd");
+
+    // Check for reminders on the selected date
+    const remindersOnSelectedDate = reminders.filter(
+      (reminder) => reminder.date === dateString
+    );
+
+    setRemindersOnDate(remindersOnSelectedDate);
+  }, [selectedDate, reminders]);
+
+  // Custom implementation for highlighting dates with reminders
+  const reminderDates = reminders.map((reminder) => new Date(reminder.date));
+
+  // Customize the day rendering to highlight days with reminders
+  const customDayRender = (props: DayProps) => {
+    // Check if this day has any reminders
+    const dateString = format(props.date, "yyyy-MM-dd");
+    const hasReminders = reminders.some((reminder) => reminder.date === dateString);
+
+    // Render with custom styling if it has reminders
     return (
-      <div 
+      <div
         className={cn(
-          className,
-          "relative flex items-center justify-center p-0",
-          hasReminders && 'font-semibold'
+          "relative",
+          props.outside && "text-muted-foreground opacity-50"
         )}
-        {...rest}
       >
-        {props.children}
-        
-        {/* Indicator dots */}
-        {(birthdayReminders.length > 0 || anniversaryReminders.length > 0) && (
-          <div className="absolute -bottom-1 flex gap-0.5 justify-center">
-            {birthdayReminders.length > 0 && (
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-            )}
-            {anniversaryReminders.length > 0 && (
-              <span className="h-1.5 w-1.5 rounded-full bg-pink-500" />
-            )}
-          </div>
-        )}
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center",
+            hasReminders &&
+              !props.selected &&
+              "bg-red-200 dark:bg-red-900 rounded-md opacity-50"
+          )}
+        ></div>
+        <div className="relative z-10">
+          <props.day {...props} />
+        </div>
       </div>
     );
   };
 
   return (
-    <Card>
-      <CardHeader className="py-3">
-        <CardTitle className="text-sm font-medium">Your Calendar</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !selectedDate && "text-muted-foreground"
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          selected={date}
-          onSelect={handleSelect}
-          className="rounded-md border"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
           components={{
-            Day: dayRenderer
+            Day: (props) => customDayRender(props),
+          }}
+          classNames={{
+            day_selected: "bg-primary text-primary-foreground",
           }}
         />
-      </CardContent>
-    </Card>
+
+        {selectedDate && remindersOnDate.length > 0 && (
+          <div className="p-3 border-t">
+            <h3 className="mb-1 font-medium">
+              {remindersOnDate.length} reminder
+              {remindersOnDate.length !== 1 ? "s" : ""} on this date:
+            </h3>
+            <ul className="space-y-1">
+              {remindersOnDate.map((reminder) => (
+                <li key={reminder.id} className="text-sm">
+                  <span
+                    className={cn(
+                      "inline-block w-2 h-2 rounded-full mr-2",
+                      reminder.type === "birthday"
+                        ? "bg-birthday"
+                        : "bg-anniversary"
+                    )}
+                  ></span>
+                  {reminder.person_name}'s{" "}
+                  {reminder.type === "birthday" ? "Birthday" : "Anniversary"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

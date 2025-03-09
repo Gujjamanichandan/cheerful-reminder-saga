@@ -115,11 +115,30 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Starting reminder check job");
     
+    // Check if we're testing a specific reminder
+    let specificReminderId = null;
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        specificReminderId = body.reminderId;
+      } catch (e) {
+        console.log("No valid JSON body or reminderId provided");
+      }
+    }
+    
     // Get all non-archived reminders
-    const { data: reminders, error } = await supabase
+    let remindersQuery = supabase
       .from("reminders")
       .select("*")
       .eq("archived", false);
+    
+    // If we have a specific reminder to test, only get that one
+    if (specificReminderId) {
+      remindersQuery = remindersQuery.eq("id", specificReminderId);
+      console.log(`Testing specific reminder with ID: ${specificReminderId}`);
+    }
+    
+    const { data: reminders, error } = await remindersQuery;
 
     if (error) {
       throw error;
@@ -134,7 +153,8 @@ const handler = async (req: Request): Promise<Response> => {
       const daysUntil = calculateDaysUntil(reminder.date);
       
       // Check if we should send a notification today based on notification_timing
-      if (reminder.notification_timing.includes(daysUntil)) {
+      // Or if we're testing a specific reminder (in which case, send regardless of timing)
+      if (specificReminderId || reminder.notification_timing.includes(daysUntil)) {
         const user = await getUser(reminder.user_id);
         
         if (user && user.email) {
