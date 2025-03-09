@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,40 +9,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import QuoteGenerator from "./QuoteGenerator";
 import { Sparkles } from "lucide-react";
+import QuoteGenerator from "./QuoteGenerator";
 
 interface QuoteGeneratorDialogProps {
-  eventType: "birthday" | "anniversary";
-  onQuoteSelected: (quote: string) => void;
+  topic?: "birthday" | "anniversary";
+  onSelectQuote: (quote: string) => void;
 }
 
-const QuoteGeneratorDialog: React.FC<QuoteGeneratorDialogProps> = ({
-  eventType,
-  onQuoteSelected,
-}) => {
+const QuoteGeneratorDialog = ({ 
+  topic = "birthday", 
+  onSelectQuote 
+}: QuoteGeneratorDialogProps) => {
   const [open, setOpen] = useState(false);
+
+  const handleSelectQuote = (quote: string) => {
+    onSelectQuote(quote);
+    setOpen(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="gap-2"
-        >
-          <Sparkles className="h-4 w-4" />
-          Generate AI Quote
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Sparkles className="h-3.5 w-3.5" />
+          Generate with AI
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>AI Quote Generator</DialogTitle>
           <DialogDescription>
-            Create the perfect {eventType} message with AI assistance
+            Create the perfect message for your {topic} reminder with AI assistance.
           </DialogDescription>
         </DialogHeader>
-        <QuoteGenerator defaultTopic={eventType} />
+        <QuoteGenerator 
+          defaultTopic={topic} 
+          onSelectQuote={handleSelectQuote} 
+        />
       </DialogContent>
     </Dialog>
   );

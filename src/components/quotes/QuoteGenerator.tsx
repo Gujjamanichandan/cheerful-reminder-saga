@@ -1,20 +1,21 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Copy, Check } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Copy, Check, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface QuoteGeneratorProps {
   defaultTopic?: "birthday" | "anniversary";
+  onSelectQuote?: (quote: string) => void;
 }
 
-const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({ defaultTopic = "birthday" }) => {
+const QuoteGenerator = ({ defaultTopic = "birthday", onSelectQuote }: QuoteGeneratorProps) => {
   const { toast } = useToast();
   const [topic, setTopic] = useState<"birthday" | "anniversary">(defaultTopic);
   const [relationship, setRelationship] = useState("");
@@ -33,7 +34,7 @@ const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({ defaultTopic = "birthda
 
       if (error) throw error;
       setQuote(data.quote);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating quote:", error);
       toast({
         title: "Error generating quote",
@@ -55,10 +56,23 @@ const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({ defaultTopic = "birthda
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const useQuote = () => {
+    if (onSelectQuote) {
+      onSelectQuote(quote);
+      toast({
+        title: "Quote selected",
+        description: "The quote has been added to your message.",
+      });
+    }
+  };
+
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl">AI Quote Generator</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          AI Quote Generator
+        </CardTitle>
         <CardDescription>
           Generate the perfect message for your special occasions
         </CardDescription>
@@ -126,7 +140,12 @@ const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({ defaultTopic = "birthda
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Generating...
             </>
-          ) : "Generate Quote"}
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Generate Quote
+            </>
+          )}
         </Button>
         
         {quote && (
@@ -136,7 +155,7 @@ const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({ defaultTopic = "birthda
               <Textarea 
                 value={quote} 
                 readOnly 
-                className="h-[150px] resize-none"
+                className="h-[150px] resize-none pr-10"
               />
               <Button
                 size="icon"
@@ -151,11 +170,21 @@ const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({ defaultTopic = "birthda
                 )}
               </Button>
             </div>
+            
+            {onSelectQuote && (
+              <Button 
+                onClick={useQuote} 
+                className="w-full mt-2" 
+                variant="outline"
+              >
+                Use This Quote
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
-        Powered by AI to help you express your feelings.
+        Powered by Deepseek AI to help you express your feelings.
       </CardFooter>
     </Card>
   );

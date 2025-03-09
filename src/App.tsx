@@ -15,6 +15,7 @@ import CreateReminder from "./pages/CreateReminder";
 import EditReminder from "./pages/EditReminder";
 import Birthdays from "./pages/Birthdays";
 import Anniversaries from "./pages/Anniversaries";
+import QuoteGenerator from "./pages/QuoteGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -96,6 +97,11 @@ const App = () => (
             <Route path="/anniversaries" element={
               <PrivateRoute>
                 <Anniversaries />
+              </PrivateRoute>
+            } />
+            <Route path="/quote-generator" element={
+              <PrivateRoute>
+                <QuoteGenerator />
               </PrivateRoute>
             } />
             
