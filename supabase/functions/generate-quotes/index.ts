@@ -26,13 +26,40 @@ serve(async (req: Request): Promise<Response> => {
     
     if (!DEEPSEEK_API_KEY) {
       console.error("DEEPSEEK_API_KEY is not set");
-      throw new Error("DEEPSEEK_API_KEY is not set in environment variables");
+      return new Response(
+        JSON.stringify({ error: "API key configuration issue. Please contact support." }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 500,
+        }
+      );
     }
     
-    const { topic, relationship, tone, length } = await req.json() as QuoteRequest;
+    // Parse the request body safely
+    let reqBody;
+    try {
+      reqBody = await req.json() as QuoteRequest;
+    } catch (e) {
+      console.error("Error parsing request body:", e);
+      return new Response(
+        JSON.stringify({ error: "Invalid request format" }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 400,
+        }
+      );
+    }
+    
+    const { topic, relationship, tone, length } = reqBody;
     
     if (!topic) {
-      throw new Error("Topic is required");
+      return new Response(
+        JSON.stringify({ error: "Topic is required" }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 400,
+        }
+      );
     }
     
     // Construct the prompt
@@ -66,27 +93,64 @@ serve(async (req: Request): Promise<Response> => {
     console.log("Request body:", requestBody);
     
     // Call Deepseek API with proper error handling
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: requestBody,
-    });
+    let response;
+    try {
+      response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: requestBody,
+      });
+    } catch (fetchError) {
+      console.error("Fetch error:", fetchError);
+      return new Response(
+        JSON.stringify({ error: "Failed to connect to AI service. Please try again later." }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 503,
+        }
+      );
+    }
     
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Deepseek API error response:", errorText);
-      throw new Error(`Deepseek API error: ${response.status} ${response.statusText}`);
+      return new Response(
+        JSON.stringify({ error: "AI service returned an error. Please try again later." }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 502,
+        }
+      );
     }
     
-    const data = await response.json();
-    console.log("Deepseek API response:", JSON.stringify(data, null, 2));
+    // Parse JSON response safely
+    let data;
+    try {
+      data = await response.json();
+      console.log("Deepseek API response:", JSON.stringify(data, null, 2));
+    } catch (jsonError) {
+      console.error("JSON parsing error:", jsonError);
+      return new Response(
+        JSON.stringify({ error: "Received invalid response from AI service" }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 502,
+        }
+      );
+    }
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error("Unexpected Deepseek API response structure:", JSON.stringify(data));
-      throw new Error("Unexpected response structure from Deepseek API");
+      return new Response(
+        JSON.stringify({ error: "Received unexpected response format from AI service" }),
+        {
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 502,
+        }
+      );
     }
     
     const quote = data.choices[0].message.content;
@@ -101,10 +165,10 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
   } catch (error) {
-    console.error("Error generating quote:", error);
+    console.error("Uncaught error in generate-quotes function:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message || "An unknown error occurred" }),
+      JSON.stringify({ error: "An unexpected error occurred. Please try again later." }),
       {
         headers: { "Content-Type": "application/json", ...corsHeaders },
         status: 500,
