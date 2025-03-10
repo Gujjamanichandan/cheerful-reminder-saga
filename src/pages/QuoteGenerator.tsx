@@ -27,6 +27,9 @@ const QuoteGeneratorPage = () => {
             <li>Click "Generate Quote" to create a personalized message</li>
             <li>Copy the generated text to use in your card, email, or message</li>
           </ol>
+          <p className="mt-4 text-sm text-muted-foreground">
+            You can also access the Quote Generator as a chat box from any page by clicking the message icon in the bottom right corner.
+          </p>
         </div>
       </div>
     </div>

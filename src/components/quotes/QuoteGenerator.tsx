@@ -6,16 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Copy, Check, Sparkles } from "lucide-react";
+import { Loader2, Copy, Check, Sparkles, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 interface QuoteGeneratorProps {
   defaultTopic?: "birthday" | "anniversary";
   onSelectQuote?: (quote: string) => void;
+  compact?: boolean;
+  onClose?: () => void;
 }
 
-const QuoteGenerator = ({ defaultTopic = "birthday", onSelectQuote }: QuoteGeneratorProps) => {
+const QuoteGenerator = ({ 
+  defaultTopic = "birthday", 
+  onSelectQuote,
+  compact = false,
+  onClose 
+}: QuoteGeneratorProps) => {
   const { toast } = useToast();
   const [topic, setTopic] = useState<"birthday" | "anniversary">(defaultTopic);
   const [relationship, setRelationship] = useState("");
@@ -63,10 +70,111 @@ const QuoteGenerator = ({ defaultTopic = "birthday", onSelectQuote }: QuoteGener
         title: "Quote selected",
         description: "The quote has been added to your message.",
       });
+      if (onClose) onClose();
     }
   };
 
-  return (
+  return compact ? (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <div className="flex justify-between gap-2">
+          <Select value={topic} onValueChange={(value: "birthday" | "anniversary") => setTopic(value)}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Select occasion" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="birthday">Birthday</SelectItem>
+              <SelectItem value="anniversary">Anniversary</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={tone} onValueChange={setTone}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Select tone" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="heartfelt">Heartfelt</SelectItem>
+              <SelectItem value="funny">Funny</SelectItem>
+              <SelectItem value="inspirational">Inspirational</SelectItem>
+              <SelectItem value="romantic">Romantic</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex gap-2">
+          <Input
+            id="relationship"
+            placeholder="Relationship (e.g., friend, spouse)"
+            value={relationship}
+            onChange={(e) => setRelationship(e.target.value)}
+            className="flex-1"
+          />
+          
+          <Select value={length} onValueChange={setLength}>
+            <SelectTrigger className="w-24">
+              <SelectValue placeholder="Length" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="short">Short</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="long">Long</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <Button 
+          onClick={generateQuote} 
+          className="w-full" 
+          disabled={loading}
+          size="sm"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-3 w-3" />
+              Generate Quote
+            </>
+          )}
+        </Button>
+      </div>
+      
+      {quote && (
+        <div className="space-y-2">
+          <div className="relative bg-muted p-3 rounded-lg text-sm">
+            <p className="pr-8">{quote}</p>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 right-2 h-6 w-6"
+              onClick={copyToClipboard}
+            >
+              {copied ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
+          
+          {onSelectQuote && (
+            <Button 
+              onClick={useQuote} 
+              className="w-full" 
+              variant="outline"
+              size="sm"
+            >
+              <Send className="mr-2 h-3 w-3" />
+              Use This Quote
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  ) : (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">

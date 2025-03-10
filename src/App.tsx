@@ -17,6 +17,7 @@ import Birthdays from "./pages/Birthdays";
 import Anniversaries from "./pages/Anniversaries";
 import QuoteGenerator from "./pages/QuoteGenerator";
 import NotFound from "./pages/NotFound";
+import ChatBox from "./components/quotes/ChatBox";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +109,7 @@ const App = () => (
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ChatBox />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
