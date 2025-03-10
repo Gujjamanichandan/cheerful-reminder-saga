@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,13 +37,22 @@ const QuoteGenerator = ({
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-quotes", {
+      console.log("Generating quote with params:", { topic, relationship, tone, length });
+      
+      const { data, error: funcError } = await supabase.functions.invoke("generate-quotes", {
         body: { topic, relationship, tone, length },
       });
 
-      if (error) {
-        console.error("Function error:", error);
-        throw new Error(error.message || "Error calling quote generator function");
+      if (funcError) {
+        console.error("Function invocation error:", funcError);
+        throw new Error(funcError.message || "Error calling quote generator function");
+      }
+      
+      console.log("Response from function:", data);
+      
+      if (data?.error) {
+        console.error("Error from function:", data.error);
+        throw new Error(data.error);
       }
       
       if (!data || !data.quote) {

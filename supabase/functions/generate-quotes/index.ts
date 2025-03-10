@@ -25,6 +25,7 @@ serve(async (req: Request): Promise<Response> => {
     const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
     
     if (!DEEPSEEK_API_KEY) {
+      console.error("DEEPSEEK_API_KEY is not set");
       throw new Error("DEEPSEEK_API_KEY is not set in environment variables");
     }
     
@@ -45,28 +46,33 @@ serve(async (req: Request): Promise<Response> => {
     
     console.log("Sending prompt to Deepseek API:", prompt);
     
-    // Call Deepseek API
+    // Prepare API request
+    const requestBody = JSON.stringify({
+      model: "deepseek-chat",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional writer specializing in creating heartfelt and meaningful quotes for special occasions. You write only the quote itself without any additional commentary or explanation."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 300,
+    });
+    
+    console.log("Request body:", requestBody);
+    
+    // Call Deepseek API with proper error handling
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: "You are a professional writer specializing in creating heartfelt and meaningful quotes for special occasions. You write only the quote itself without any additional commentary or explanation."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 300,
-      }),
+      body: requestBody,
     });
     
     if (!response.ok) {
@@ -76,6 +82,7 @@ serve(async (req: Request): Promise<Response> => {
     }
     
     const data = await response.json();
+    console.log("Deepseek API response:", JSON.stringify(data, null, 2));
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error("Unexpected Deepseek API response structure:", JSON.stringify(data));
