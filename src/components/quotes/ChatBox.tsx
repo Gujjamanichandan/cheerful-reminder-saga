@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { MessageCircle, X, Sparkles } from "lucide-react";
 import QuoteGenerator from "./QuoteGenerator";
 
 const ChatBox = () => {
@@ -30,7 +30,7 @@ const ChatBox = () => {
             <div className="p-4">
               <QuoteGenerator 
                 defaultTopic="birthday" 
-                compact={true}
+                compact={true} 
                 onClose={() => setIsOpen(false)}
               />
             </div>
