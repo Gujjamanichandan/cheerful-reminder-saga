@@ -70,12 +70,18 @@ serve(async (req: Request): Promise<Response> => {
     });
     
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Deepseek API error:", errorData);
+      const errorText = await response.text();
+      console.error("Deepseek API error response:", errorText);
       throw new Error(`Deepseek API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error("Unexpected Deepseek API response structure:", JSON.stringify(data));
+      throw new Error("Unexpected response structure from Deepseek API");
+    }
+    
     const quote = data.choices[0].message.content;
     
     console.log("Generated quote:", quote);
@@ -91,7 +97,7 @@ serve(async (req: Request): Promise<Response> => {
     console.error("Error generating quote:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "An unknown error occurred" }),
       {
         headers: { "Content-Type": "application/json", ...corsHeaders },
         status: 500,

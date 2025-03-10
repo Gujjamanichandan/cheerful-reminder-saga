@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Copy, Check, Sparkles, Send } from "lucide-react";
+import { Loader2, Copy, Check, Sparkles, Send, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuoteGeneratorProps {
   defaultTopic?: "birthday" | "anniversary";
@@ -31,18 +32,30 @@ const QuoteGenerator = ({
   const [quote, setQuote] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateQuote = async () => {
     setLoading(true);
+    setError(null);
     try {
       const { data, error } = await supabase.functions.invoke("generate-quotes", {
         body: { topic, relationship, tone, length },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Function error:", error);
+        throw new Error(error.message || "Error calling quote generator function");
+      }
+      
+      if (!data || !data.quote) {
+        console.error("Invalid response data:", data);
+        throw new Error("Received invalid response from quote generator");
+      }
+      
       setQuote(data.quote);
     } catch (error: any) {
       console.error("Error generating quote:", error);
+      setError(error.message || "Failed to generate quote. Please try again.");
       toast({
         title: "Error generating quote",
         description: "There was a problem connecting to the AI service. Please try again.",
@@ -142,6 +155,13 @@ const QuoteGenerator = ({
         </Button>
       </div>
       
+      {error && (
+        <Alert variant="destructive" className="py-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+      
       {quote && (
         <div className="space-y-2">
           <div className="relative bg-muted p-3 rounded-lg text-sm">
@@ -237,6 +257,13 @@ const QuoteGenerator = ({
             </SelectContent>
           </Select>
         </div>
+        
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         
         <Button 
           onClick={generateQuote} 
