@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -8,17 +9,14 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Reminder } from "@/lib/supabase";
-import { Loader2, AlertCircle } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isSending, setIsSending] = useState(false);
   const [isTestingReminder, setIsTestingReminder] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [selectedReminderId, setSelectedReminderId] = useState<string | null>(null);
-  const [testMode, setTestMode] = useState(true);
   const initials = user?.email?.substring(0, 2).toUpperCase() || "U";
 
   useEffect(() => {
@@ -88,132 +86,6 @@ const Settings = () => {
         description: "Failed to create demo reminder.",
         variant: "destructive",
       });
-    }
-  };
-
-  const sendTestEmail = async () => {
-    if (!user?.email) {
-      toast({
-        title: "Error",
-        description: "No email address available to send test",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSending(true);
-      toast({
-        title: "Sending Test Email",
-        description: "Preparing to send a test email to your address...",
-      });
-      
-      const { data, error } = await supabase.functions.invoke("send-reminder-email", {
-        method: "POST",
-        body: {
-          email: user.email,
-          personName: "Test Person",
-          eventType: "birthday",
-          eventDate: new Date().toISOString(),
-          daysUntil: 0,
-          customMessage: "This is a test email to verify the email notification system is working properly.",
-        },
-      });
-
-      if (error) {
-        console.error("Error response from function:", error);
-        throw error;
-      }
-
-      console.log("Email function response:", data);
-
-      if (testMode) {
-        toast({
-          title: "Test Email Sent (Test Mode)",
-          description: "In test mode, emails are redirected to the Resend owner's email. Please check the Resend owner's email address.",
-        });
-      } else {
-        toast({
-          title: "Test Email Sent",
-          description: "A test email has been sent to your email address. Please check your inbox (and spam folder).",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error sending test email:", error);
-      toast({
-        title: "Failed to Send Email",
-        description: `Error: ${error.message || "Unknown error"}. Please check the console logs for details.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const sendWelcomeEmail = async () => {
-    if (!user?.email) {
-      toast({
-        title: "Error",
-        description: "No email address available to send test",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSending(true);
-      toast({
-        title: "Sending Welcome Email",
-        description: "Preparing to send a welcome email to your address...",
-      });
-      
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-        
-      const fullName = profileData?.full_name || user.email?.split('@')[0] || 'there';
-      
-      const { data, error } = await supabase.functions.invoke("send-reminder-email", {
-        method: "POST",
-        body: {
-          email: user.email,
-          personName: fullName,
-          eventType: "welcome",
-          eventDate: new Date().toISOString(),
-          daysUntil: 0,
-          customMessage: "We're thrilled to have you join us! Cheerful Reminder is here to help you never miss an important date. Start by adding your first reminder.",
-        },
-      });
-
-      if (error) {
-        console.error("Error response from function:", error);
-        throw error;
-      }
-
-      console.log("Welcome email function response:", data);
-      
-      if (testMode) {
-        toast({
-          title: "Welcome Email Sent (Test Mode)",
-          description: "In test mode, emails are redirected to the Resend owner's email. Please check the Resend owner's email address.",
-        });
-      } else {
-        toast({
-          title: "Welcome Email Sent",
-          description: "A welcome email has been sent to your email address. Please check your inbox (and spam folder).",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error sending welcome email:", error);
-      toast({
-        title: "Failed to Send Email",
-        description: `Error: ${error.message || "Unknown error"}. Please check the console logs for details.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
     }
   };
 
@@ -299,56 +171,6 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Alert variant="destructive" className="max-w-2xl mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Email Test Mode Active</AlertTitle>
-          <AlertDescription>
-            Resend is in test mode. All emails will be redirected to the Resend account owner's email address, 
-            regardless of the recipient you specify. To see test emails, check the inbox for the email associated with your Resend account.
-          </AlertDescription>
-        </Alert>
-
-        <Card className="max-w-2xl mb-6">
-          <CardHeader>
-            <CardTitle>Email System Test</CardTitle>
-            <CardDescription>
-              Test if the email notification system is working properly
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Click the buttons below to send test emails. In test mode, these will be sent to the Resend account owner's email 
-              address (not to {user?.email}).
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-2">
-            <Button 
-              onClick={sendTestEmail} 
-              disabled={isSending}
-              className="bg-celebration hover:bg-celebration/90"
-            >
-              {isSending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : "Send Test Email"}
-            </Button>
-            <Button 
-              onClick={sendWelcomeEmail} 
-              disabled={isSending}
-              variant="outline"
-            >
-              {isSending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : "Send Welcome Email"}
-            </Button>
-          </CardFooter>
-        </Card>
-
         <Card className="max-w-2xl">
           <CardHeader>
             <CardTitle>Test Specific Reminder</CardTitle>
@@ -359,7 +181,7 @@ const Settings = () => {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground mb-4">
               Select a reminder from the dropdown and click the button to simulate the reminder notification.
-              This will send an email for the selected reminder (in test mode, to the Resend owner's email).
+              This will send an email for the selected reminder to your email address.
             </p>
             
             {reminders.length > 0 ? (

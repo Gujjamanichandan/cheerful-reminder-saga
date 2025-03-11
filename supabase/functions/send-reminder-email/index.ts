@@ -43,17 +43,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (!email) {
       throw new Error("Email is required");
     }
-
-    // Check if we're in testing mode
-    // For Resend, when you're in test mode, you can only send to the verified email
-    const ownerEmail = Deno.env.get("RESEND_OWNER_EMAIL") || "gujjamanichandan@gmail.com";
     
-    // Use the owner's email as the recipient in test mode
-    const testModeRecipient = ownerEmail;
-    const finalRecipient = testModeRecipient;
+    // Send to the actual recipient email
+    const finalRecipient = email;
     
     console.log(`Preparing to send ${eventType} email to ${finalRecipient} for ${personName}`);
-    console.log(`Original recipient was: ${email}`);
 
     // Welcome email template
     if (eventType === "welcome") {
@@ -87,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
                   Thank you for joining Cheerful Reminder!
                 </p>
                 <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
-                  This email was sent to: ${email} (redirected to ${finalRecipient} in test mode)
+                  This email was sent to: ${email}
                 </p>
               </div>
             </div>
@@ -98,9 +92,8 @@ const handler = async (req: Request): Promise<Response> => {
 
         return new Response(JSON.stringify({
           success: true,
-          originalRecipient: email,
-          actualRecipient: finalRecipient,
-          message: "Email sent successfully in test mode"
+          recipient: email,
+          message: "Email sent successfully"
         }), {
           status: 200,
           headers: {
@@ -158,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
                 This is an automated reminder from your Cheerful Reminder App.
               </p>
               <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
-                This email was sent to: ${email} (redirected to ${finalRecipient} in test mode)
+                This email was sent to: ${email}
               </p>
             </div>
           </div>
@@ -169,9 +162,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(JSON.stringify({
         success: true,
-        originalRecipient: email,
-        actualRecipient: finalRecipient,
-        message: "Email sent successfully in test mode"
+        recipient: email,
+        message: "Email sent successfully"
       }), {
         status: 200,
         headers: {
