@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -44,11 +45,7 @@ export function SignInForm() {
       setIsLoading(true);
       await signIn(values.email, values.password);
       
-      // Display toast about welcome email
-      toast({
-        title: "Welcome Email",
-        description: "A welcome email is being sent to your email address.",
-      });
+      // The toast about welcome email is now handled in the AuthContext
       
       navigate("/dashboard");
     } catch (error) {
@@ -100,7 +97,12 @@ export function SignInForm() {
               className="w-full bg-celebration hover:bg-celebration/90"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : "Sign In"}
             </Button>
           </form>
         </Form>

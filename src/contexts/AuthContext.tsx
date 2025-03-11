@@ -61,6 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendWelcomeEmail = async (email: string, fullName: string) => {
     try {
+      toast({
+        title: "Sending Welcome Email",
+        description: "Preparing to send a welcome email...",
+      });
+      
       const { data, error } = await supabase.functions.invoke('send-reminder-email', {
         body: {
           email,
@@ -74,8 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error sending welcome email:', error);
+        toast({
+          title: "Welcome Email Error",
+          description: "There was an issue sending the welcome email. You can try again from the Settings page.",
+          variant: "destructive",
+        });
       } else {
         console.log('Welcome email sent successfully:', data);
+        toast({
+          title: "Welcome Email",
+          description: "A welcome email has been sent (in test mode, check the Resend owner's email).",
+        });
       }
     } catch (error) {
       console.error('Unexpected error sending welcome email:', error);
@@ -104,14 +118,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq('id', data.user.id)
           .single();
           
-        const fullName = profileData?.full_name || '';
+        const fullName = profileData?.full_name || data.user.user_metadata?.full_name || '';
+        
+        // We'll show a toast about the welcome email before actually sending it
+        toast({
+          title: 'Welcome back!',
+          description: 'You have successfully signed in. We\'re sending you a welcome email.',
+        });
+        
+        // Send the welcome email
         sendWelcomeEmail(email, fullName);
+      } else {
+        toast({
+          title: 'Welcome back!',
+          description: 'You have successfully signed in.',
+        });
       }
-      
-      toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
-      });
     } finally {
       setIsLoading(false);
     }

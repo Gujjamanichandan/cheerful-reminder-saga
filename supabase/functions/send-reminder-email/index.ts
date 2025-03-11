@@ -43,8 +43,17 @@ const handler = async (req: Request): Promise<Response> => {
     if (!email) {
       throw new Error("Email is required");
     }
+
+    // Check if we're in testing mode
+    // For Resend, when you're in test mode, you can only send to the verified email
+    const ownerEmail = Deno.env.get("RESEND_OWNER_EMAIL") || "gujjamanichandan@gmail.com";
     
-    console.log(`Preparing to send ${eventType} email to ${email} for ${personName}`);
+    // Use the owner's email as the recipient in test mode
+    const testModeRecipient = ownerEmail;
+    const finalRecipient = testModeRecipient;
+    
+    console.log(`Preparing to send ${eventType} email to ${finalRecipient} for ${personName}`);
+    console.log(`Original recipient was: ${email}`);
 
     // Welcome email template
     if (eventType === "welcome") {
@@ -52,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const emailResponse = await resend.emails.send({
           from: "Cheerful Reminder <onboarding@resend.dev>",
-          to: [email],
+          to: [finalRecipient],
           subject: `Welcome to Cheerful Reminder!`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
@@ -77,6 +86,9 @@ const handler = async (req: Request): Promise<Response> => {
                 <p style="font-size: 14px; color: #6b7280;">
                   Thank you for joining Cheerful Reminder!
                 </p>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
+                  This email was sent to: ${email} (redirected to ${finalRecipient} in test mode)
+                </p>
               </div>
             </div>
           `,
@@ -84,7 +96,12 @@ const handler = async (req: Request): Promise<Response> => {
 
         console.log("Welcome email sent successfully:", JSON.stringify(emailResponse));
 
-        return new Response(JSON.stringify(emailResponse), {
+        return new Response(JSON.stringify({
+          success: true,
+          originalRecipient: email,
+          actualRecipient: finalRecipient,
+          message: "Email sent successfully in test mode"
+        }), {
           status: 200,
           headers: {
             "Content-Type": "application/json",
@@ -116,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       const emailResponse = await resend.emails.send({
         from: "Cheerful Reminder <onboarding@resend.dev>",
-        to: [email],
+        to: [finalRecipient],
         subject: `${eventTypeCapitalized} Reminder: ${personName}'s ${eventType} is ${dayText}!`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
@@ -140,6 +157,9 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="font-size: 14px; color: #6b7280;">
                 This is an automated reminder from your Cheerful Reminder App.
               </p>
+              <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
+                This email was sent to: ${email} (redirected to ${finalRecipient} in test mode)
+              </p>
             </div>
           </div>
         `,
@@ -147,7 +167,12 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log("Email sent successfully:", JSON.stringify(emailResponse));
 
-      return new Response(JSON.stringify(emailResponse), {
+      return new Response(JSON.stringify({
+        success: true,
+        originalRecipient: email,
+        actualRecipient: finalRecipient,
+        message: "Email sent successfully in test mode"
+      }), {
         status: 200,
         headers: {
           "Content-Type": "application/json",

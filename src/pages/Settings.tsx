@@ -9,7 +9,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Reminder } from "@/lib/supabase";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const Settings = () => {
   const [isTestingReminder, setIsTestingReminder] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [selectedReminderId, setSelectedReminderId] = useState<string | null>(null);
+  const [testMode, setTestMode] = useState(true);
   const initials = user?.email?.substring(0, 2).toUpperCase() || "U";
 
   // Fetch user's reminders
@@ -130,10 +132,17 @@ const Settings = () => {
 
       console.log("Email function response:", data);
 
-      toast({
-        title: "Test Email Sent",
-        description: "A test email has been sent to your email address. Please check your inbox (and spam folder).",
-      });
+      if (testMode) {
+        toast({
+          title: "Test Email Sent (Test Mode)",
+          description: "In test mode, emails are redirected to the Resend owner's email. Please check the Resend owner's email address.",
+        });
+      } else {
+        toast({
+          title: "Test Email Sent",
+          description: "A test email has been sent to your email address. Please check your inbox (and spam folder).",
+        });
+      }
     } catch (error: any) {
       console.error("Error sending test email:", error);
       toast({
@@ -190,10 +199,17 @@ const Settings = () => {
 
       console.log("Welcome email function response:", data);
       
-      toast({
-        title: "Welcome Email Sent",
-        description: "A welcome email has been sent to your email address. Please check your inbox (and spam folder).",
-      });
+      if (testMode) {
+        toast({
+          title: "Welcome Email Sent (Test Mode)",
+          description: "In test mode, emails are redirected to the Resend owner's email. Please check the Resend owner's email address.",
+        });
+      } else {
+        toast({
+          title: "Welcome Email Sent",
+          description: "A welcome email has been sent to your email address. Please check your inbox (and spam folder).",
+        });
+      }
     } catch (error: any) {
       console.error("Error sending welcome email:", error);
       toast({
@@ -288,6 +304,15 @@ const Settings = () => {
           </CardContent>
         </Card>
 
+        <Alert variant="warning" className="max-w-2xl mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Email Test Mode Active</AlertTitle>
+          <AlertDescription>
+            Resend is in test mode. All emails will be redirected to the Resend account owner's email address, 
+            regardless of the recipient you specify. To see test emails, check the inbox for the email associated with your Resend account.
+          </AlertDescription>
+        </Alert>
+
         <Card className="max-w-2xl mb-6">
           <CardHeader>
             <CardTitle>Email System Test</CardTitle>
@@ -297,8 +322,8 @@ const Settings = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Click the buttons below to send test emails to your registered email address ({user?.email}).
-              This helps verify that the reminder notification system is functioning correctly.
+              Click the buttons below to send test emails. In test mode, these will be sent to the Resend account owner's email 
+              address (not to {user?.email}).
             </p>
           </CardContent>
           <CardFooter className="flex flex-wrap gap-2">
@@ -339,7 +364,7 @@ const Settings = () => {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground mb-4">
               Select a reminder from the dropdown and click the button to simulate the reminder notification.
-              This will send an actual notification email for the selected reminder.
+              This will send an email for the selected reminder (in test mode, to the Resend owner's email).
             </p>
             
             {reminders.length > 0 ? (
