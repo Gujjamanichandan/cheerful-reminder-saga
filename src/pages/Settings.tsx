@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -22,7 +21,6 @@ const Settings = () => {
   const [testMode, setTestMode] = useState(true);
   const initials = user?.email?.substring(0, 2).toUpperCase() || "U";
 
-  // Fetch user's reminders
   useEffect(() => {
     const fetchReminders = async () => {
       if (!user) return;
@@ -38,7 +36,6 @@ const Settings = () => {
         
         setReminders(data as Reminder[]);
         
-        // Create a "tomorrow" reminder if no reminders exist
         if (!data || data.length === 0) {
           await createTomorrowReminder();
         }
@@ -50,12 +47,10 @@ const Settings = () => {
     fetchReminders();
   }, [user]);
 
-  // Create a birthday reminder for tomorrow
   const createTomorrowReminder = async () => {
     if (!user) return;
     
     try {
-      // Calculate tomorrow's date
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       
@@ -63,10 +58,10 @@ const Settings = () => {
         user_id: user.id,
         person_name: "Demo Person",
         type: "birthday" as const,
-        date: tomorrow.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        date: tomorrow.toISOString().split('T')[0],
         relationship: "friend",
         custom_message: "This is a test birthday reminder created for testing purposes.",
-        notification_timing: [1, 0], // Notify 1 day before and on the day
+        notification_timing: [1, 0],
         notification_method: "email",
       };
       
@@ -304,7 +299,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Alert variant="warning" className="max-w-2xl mb-6">
+        <Alert variant="destructive" className="max-w-2xl mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Email Test Mode Active</AlertTitle>
           <AlertDescription>
