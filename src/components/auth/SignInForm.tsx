@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -28,6 +29,7 @@ export function SignInForm() {
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,6 +43,13 @@ export function SignInForm() {
     try {
       setIsLoading(true);
       await signIn(values.email, values.password);
+      
+      // Display toast about welcome email
+      toast({
+        title: "Welcome Email",
+        description: "A welcome email is being sent to your email address.",
+      });
+      
       navigate("/dashboard");
     } catch (error) {
       console.error("Sign in error:", error);

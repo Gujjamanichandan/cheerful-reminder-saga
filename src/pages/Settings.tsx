@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Reminder } from "@/lib/supabase";
+import { Loader2 } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -105,6 +106,10 @@ const Settings = () => {
 
     try {
       setIsSending(true);
+      toast({
+        title: "Sending Test Email",
+        description: "Preparing to send a test email to your address...",
+      });
       
       const { data, error } = await supabase.functions.invoke("send-reminder-email", {
         method: "POST",
@@ -118,19 +123,82 @@ const Settings = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error response from function:", error);
+        throw error;
+      }
+
+      console.log("Email function response:", data);
 
       toast({
         title: "Test Email Sent",
-        description: "A test email has been sent to your email address.",
+        description: "A test email has been sent to your email address. Please check your inbox (and spam folder).",
       });
-      
-      console.log("Email sent successfully:", data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending test email:", error);
       toast({
         title: "Failed to Send Email",
-        description: "There was an error sending the test email. Please check the console for details.",
+        description: `Error: ${error.message || "Unknown error"}. Please check the console logs for details.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const sendWelcomeEmail = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "No email address available to send test",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      toast({
+        title: "Sending Welcome Email",
+        description: "Preparing to send a welcome email to your address...",
+      });
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+        
+      const fullName = profileData?.full_name || user.email?.split('@')[0] || 'there';
+      
+      const { data, error } = await supabase.functions.invoke("send-reminder-email", {
+        method: "POST",
+        body: {
+          email: user.email,
+          personName: fullName,
+          eventType: "welcome",
+          eventDate: new Date().toISOString(),
+          daysUntil: 0,
+          customMessage: "We're thrilled to have you join us! Cheerful Reminder is here to help you never miss an important date. Start by adding your first reminder.",
+        },
+      });
+
+      if (error) {
+        console.error("Error response from function:", error);
+        throw error;
+      }
+
+      console.log("Welcome email function response:", data);
+      
+      toast({
+        title: "Welcome Email Sent",
+        description: "A welcome email has been sent to your email address. Please check your inbox (and spam folder).",
+      });
+    } catch (error: any) {
+      console.error("Error sending welcome email:", error);
+      toast({
+        title: "Failed to Send Email",
+        description: `Error: ${error.message || "Unknown error"}. Please check the console logs for details.`,
         variant: "destructive",
       });
     } finally {
@@ -150,6 +218,10 @@ const Settings = () => {
 
     try {
       setIsTestingReminder(true);
+      toast({
+        title: "Testing Reminder",
+        description: "Processing your selected reminder...",
+      });
       
       const { data, error } = await supabase.functions.invoke("check-reminders", {
         method: "POST",
@@ -158,14 +230,18 @@ const Settings = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error response from function:", error);
+        throw error;
+      }
 
+      console.log("Reminder check result:", data);
       const emailsSent = data?.emailsSent || [];
       
       if (emailsSent.length > 0) {
         toast({
           title: "Reminder Email Sent",
-          description: `A reminder email for ${emailsSent[0].personName} has been sent to your email address.`,
+          description: `A reminder email for ${emailsSent[0].personName} has been sent to your email address. Please check your inbox (and spam folder).`,
         });
       } else {
         toast({
@@ -174,13 +250,11 @@ const Settings = () => {
           variant: "destructive",
         });
       }
-      
-      console.log("Reminder check result:", data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error testing reminder:", error);
       toast({
         title: "Failed to Test Reminder",
-        description: "There was an error testing the reminder. Please check the console for details.",
+        description: `Error: ${error.message || "Unknown error"}. Please check the console logs for details.`,
         variant: "destructive",
       });
     } finally {
@@ -223,17 +297,34 @@ const Settings = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Click the button below to send a test email to your registered email address ({user?.email}).
+              Click the buttons below to send test emails to your registered email address ({user?.email}).
               This helps verify that the reminder notification system is functioning correctly.
             </p>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-wrap gap-2">
             <Button 
               onClick={sendTestEmail} 
               disabled={isSending}
               className="bg-celebration hover:bg-celebration/90"
             >
-              {isSending ? "Sending..." : "Send Test Email"}
+              {isSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : "Send Test Email"}
+            </Button>
+            <Button 
+              onClick={sendWelcomeEmail} 
+              disabled={isSending}
+              variant="outline"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : "Send Welcome Email"}
             </Button>
           </CardFooter>
         </Card>
@@ -287,7 +378,12 @@ const Settings = () => {
               disabled={isTestingReminder || !selectedReminderId}
               className="bg-celebration hover:bg-celebration/90"
             >
-              {isTestingReminder ? "Sending..." : "Test Selected Reminder"}
+              {isTestingReminder ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : "Test Selected Reminder"}
             </Button>
           </CardFooter>
         </Card>
