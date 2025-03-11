@@ -13,7 +13,7 @@ const corsHeaders = {
 interface ReminderEmailRequest {
   email: string;
   personName: string;
-  eventType: "birthday" | "anniversary";
+  eventType: "birthday" | "anniversary" | "welcome";
   eventDate: string;
   daysUntil: number;
   customMessage: string;
@@ -29,6 +29,52 @@ const handler = async (req: Request): Promise<Response> => {
     const { email, personName, eventType, eventDate, daysUntil, customMessage }: ReminderEmailRequest = 
       await req.json();
 
+    // Welcome email template
+    if (eventType === "welcome") {
+      const emailResponse = await resend.emails.send({
+        from: "Cheerful Reminder <onboarding@resend.dev>",
+        to: [email],
+        subject: `Welcome to Cheerful Reminder!`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+            <h1 style="color: #3b82f6; text-align: center;">
+              Welcome to Cheerful Reminder!
+            </h1>
+            <p style="font-size: 18px;">
+              Hello ${personName},
+            </p>
+            <p style="font-size: 16px;">
+              ${customMessage}
+            </p>
+            <div style="background-color: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <p style="font-size: 16px; margin: 0;">
+                <strong>Get Started:</strong><br>
+                1. Add important birthdays and anniversaries<br>
+                2. Set notification timings<br>
+                3. Relax knowing you'll never miss an important date
+              </p>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+              <p style="font-size: 14px; color: #6b7280;">
+                Thank you for joining Cheerful Reminder!
+              </p>
+            </div>
+          </div>
+        `,
+      });
+
+      console.log("Welcome email sent successfully:", emailResponse);
+
+      return new Response(JSON.stringify(emailResponse), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    }
+
+    // Standard reminder email (existing code)
     const formattedDate = new Date(eventDate).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
@@ -44,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     const eventTypeCapitalized = eventType.charAt(0).toUpperCase() + eventType.slice(1);
     
     const emailResponse = await resend.emails.send({
-      from: "Reminders <onboarding@resend.dev>",
+      from: "Cheerful Reminder <onboarding@resend.dev>",
       to: [email],
       subject: `${eventTypeCapitalized} Reminder: ${personName}'s ${eventType} is ${dayText}!`,
       html: `
@@ -67,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
           ` : ''}
           <div style="text-align: center; margin-top: 30px;">
             <p style="font-size: 14px; color: #6b7280;">
-              This is an automated reminder from your Reminder App.
+              This is an automated reminder from your Cheerful Reminder App.
             </p>
           </div>
         </div>

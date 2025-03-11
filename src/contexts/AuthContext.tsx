@@ -59,10 +59,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [toast]);
 
+  const sendWelcomeEmail = async (email: string, fullName: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-reminder-email', {
+        body: {
+          email,
+          personName: fullName || 'there',
+          eventType: 'welcome',
+          eventDate: new Date().toISOString(),
+          daysUntil: 0,
+          customMessage: "We're thrilled to have you join us! Cheerful Reminder is here to help you never miss an important date. Start by adding your first reminder."
+        }
+      });
+
+      if (error) {
+        console.error('Error sending welcome email:', error);
+      } else {
+        console.log('Welcome email sent successfully:', data);
+      }
+    } catch (error) {
+      console.error('Unexpected error sending welcome email:', error);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         toast({
@@ -71,6 +94,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           variant: 'destructive',
         });
         throw error;
+      }
+      
+      // Send welcome email after successful login
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', data.user.id)
+          .single();
+          
+        const fullName = profileData?.full_name || '';
+        sendWelcomeEmail(email, fullName);
       }
       
       toast({
