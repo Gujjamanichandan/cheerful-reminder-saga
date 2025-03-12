@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -19,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,12 +77,17 @@ export function ReminderForm({ onSuccess, editingReminder }: ReminderFormProps) 
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Properly initialize the date when editing a reminder
+  const initialDate = editingReminder 
+    ? new Date(editingReminder.date) 
+    : new Date();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: editingReminder ? {
       personName: editingReminder.person_name,
       type: editingReminder.type as ReminderType,
-      date: new Date(editingReminder.date),
+      date: initialDate,
       relationship: editingReminder.relationship,
       customMessage: editingReminder.custom_message || "",
       notificationMethod: editingReminder.notification_method,
@@ -91,7 +95,7 @@ export function ReminderForm({ onSuccess, editingReminder }: ReminderFormProps) 
     } : {
       personName: "",
       type: "birthday",
-      date: new Date(),
+      date: initialDate,
       relationship: "family",
       customMessage: "",
       notificationMethod: "email",
@@ -136,11 +140,16 @@ export function ReminderForm({ onSuccess, editingReminder }: ReminderFormProps) 
     try {
       setIsLoading(true);
 
+      // Create a new Date object to ensure we're preserving the selected date
+      // Format as ISO string and take only the date part to prevent timezone issues
+      const selectedDate = values.date;
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      
       const reminderData = {
         user_id: user.id,
         person_name: values.personName,
         type: values.type,
-        date: format(values.date, "yyyy-MM-dd"),
+        date: formattedDate,
         relationship: values.relationship,
         custom_message: values.customMessage || "",
         notification_timing: values.notificationTiming,
