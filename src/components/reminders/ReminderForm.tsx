@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,7 +80,7 @@ export function ReminderForm({ onSuccess, editingReminder }: ReminderFormProps) 
 
   // Properly initialize the date when editing a reminder
   const initialDate = editingReminder 
-    ? new Date(editingReminder.date) 
+    ? new Date(editingReminder.date + "T00:00:00") // Ensure midnight in local timezone
     : new Date();
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -140,10 +141,16 @@ export function ReminderForm({ onSuccess, editingReminder }: ReminderFormProps) 
     try {
       setIsLoading(true);
 
-      // Create a new Date object to ensure we're preserving the selected date
-      // Format as ISO string and take only the date part to prevent timezone issues
+      // Create a proper date string in YYYY-MM-DD format
+      // Fix timezone issues by ensuring we get the correct local date
       const selectedDate = values.date;
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      
+      // Format date to preserve the exact day the user selected
+      // Use a formatting method that doesn't shift days due to timezone
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
       
       const reminderData = {
         user_id: user.id,
